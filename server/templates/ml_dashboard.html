@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .header .subtitle {
+      font-size: 1.2rem;
+      opacity: 0.95;
+    }
+
+    .ml-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .card-header i {
+      font-size: 1.8rem;
+      color: #667eea;
+    }
+
+    .card-header h3 {
+      font-size: 1.3rem;
+    }
+
+    /* ML Prediction Card */
+    .prediction-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .prediction-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 8px;
+      transition: transform 0.2s;
+    }
+
+    .prediction-item:hover {
+      transform: translateX(5px);
+    }
+
+    .prediction-time {
+      font-weight: 600;
+      color: #667eea;
+    }
+
+    .prediction-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .prediction-bar {
+      flex: 1;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      margin: 0 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prediction-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    /* Weather Card */
+    .weather-current {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .weather-item {
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .weather-item i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .weather-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .weather-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .weather-alert {
+      padding: 15px;
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+
+    .weather-alert.danger {
+      background: #f8d7da;
+      border-color: #dc3545;
+    }
+
+    .weather-alert.success {
+      background: #d4edda;
+      border-color: #28a745;
+    }
+
+    /* Anomaly Card */
+    .anomaly-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .anomaly-item {
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid;
+      background: #f8f9fa;
+    }
+
+    .anomaly-item.info {
+      border-color: #17a2b8;
+    }
+
+    .anomaly-item.warning {
+      border-color: #ffc107;
+      background: #fff3cd;
+    }
+
+    .anomaly-item.critical {
+      border-color: #dc3545;
+      background: #f8d7da;
+    }
+
+    .anomaly-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .anomaly-type {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .anomaly-severity {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .anomaly-severity.info {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .anomaly-severity.warning {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .anomaly-severity.critical {
+      background: #dc3545;
+      color: white;
+    }
+
+    .anomaly-message {
+      font-size: 0.95rem;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .anomaly-time {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 5px;
+    }
+
+    /* Recommendation Card */
+    .recommendation-box {
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .recommendation-box.water-now {
+      background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+      color: white;
+    }
+
+    .recommendation-box.water-soon {
+      background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+      color: #333;
+    }
+
+    .recommendation-box.no-water {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+    }
+
+    .recommendation-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+
+    .recommendation-action {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .recommendation-reason {
+      font-size: 1rem;
+      opacity: 0.95;
+      line-height: 1.6;
+    }
+
+    .confidence-score {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 0.9rem;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .status-badge.good {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-badge.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-badge.critical {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    /* Full width cards */
+    .card-full {
+      grid-column: 1 / -1;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-brain"></i> AI Smart Irrigation System</h1>
+      <p class="subtitle">Machine Learning Powered Automatic Watering</p>
+      <div class="ml-badge">
+        <i class="fas fa-robot"></i> ML-Enhanced Dashboard
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <!-- 1. ML Recommendation -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-lightbulb"></i>
+          <h3>AI Recommendation</h3>
+        </div>
+        <div id="recommendationContent">
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Đang phân tích...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 24h Prediction -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-crystal-ball"></i>
+          <h3>24h Moisture Forecast</h3>
+        </div>
+        <div id="predictionContent">
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Đang dự đoán...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Weather Integration -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-cloud-sun-rain"></i>
+          <h3>Weather Impact</h3>
+        </div>
+        <div id="weatherContent">
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Đang tải thời tiết...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Anomaly Detection -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h3>System Health</h3>
+        </div>
+        <div id="anomalyContent">
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Đang kiểm tra...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Prediction Chart -->
+      <div class="card card-full">
+        <div class="card-header">
+          <i class="fas fa-chart-area"></i>
+          <h3>Actual vs Predicted Moisture</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="predictionChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let predictionChart = null;
+
+    // ============================================
+    // 1. LOAD ML RECOMMENDATION
+    // ============================================
+    async function loadRecommendation() {
+      try {
+        const response = await fetch('/api/ml/recommendation');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          const rec = data.recommendation;
+          const actionClass = rec.action.toLowerCase().replace('_', '-');
+
+          let icon = '';
+          if (rec.action === 'WATER_NOW') {
+            icon = '<i class="fas fa-faucet-drip"></i>';
+          } else if (rec.action === 'WATER_SOON') {
+            icon = '<i class="fas fa-clock"></i>';
+          } else {
+            icon = '<i class="fas fa-check-circle"></i>';
+          }
+
+          document.getElementById('recommendationContent').innerHTML = `
+            <div class="recommendation-box ${actionClass}">
+              <div class="recommendation-icon">${icon}</div>
+              <div class="recommendation-action">${rec.action.replace('_', ' ')}</div>
+              <div class="recommendation-reason">${rec.reason}</div>
+              <div class="recommendation-reason" style="margin-top: 10px;">
+                <i class="fas fa-info-circle"></i> ${rec.suggested_duration}
+              </div>
+              <div class="confidence-score">
+                <i class="fas fa-brain"></i> Confidence: ${(rec.confidence * 100).toFixed(0)}%
+              </div>
+            </div>
+            <div style="text-align: center; color: #666; font-size: 0.9rem;">
+              <i class="fas fa-sync-alt"></i> Updated: ${new Date().toLocaleTimeString('vi-VN')}
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading recommendation:', error);
+        document.getElementById('recommendationContent').innerHTML = `
+          <p style="color: #dc3545; text-align: center;">
+            <i class="fas fa-exclamation-circle"></i> Không thể tải recommendation
+          </p>
+        `;
+      }
+    }
+
+    // ============================================
+    // 2. LOAD 24H PREDICTIONS
+    // ============================================
+    async function loadPredictions() {
+      try {
+        const response = await fetch('/api/ml/predict');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          const predictions = data.predictions.slice(0, 8); // First 8 hours
+          const summary = data.summary;
+
+          let html = `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+              <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 8px;">
+                <div style="font-size: 0.8rem; color: #666;">MIN</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">${summary.min}%</div>
+              </div>
+              <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 8px;">
+                <div style="font-size: 0.8rem; color: #666;">AVG</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #667eea;">${summary.avg}%</div>
+              </div>
+              <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 8px;">
+                <div style="font-size: 0.8rem; color: #666;">MAX</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">${summary.max}%</div>
+              </div>
+            </div>
+            <div class="prediction-timeline">
+          `;
+
+          predictions.forEach(p => {
+            const width = p.predicted_soil;
+            const time = new Date(p.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+            html += `
+              <div class="prediction-item">
+                <div class="prediction-time">+${p.hour}h<br>${time}</div>
+                <div class="prediction-bar">
+                  <div class="prediction-bar-fill" style="width: ${width}%"></div>
+                </div>
+                <div class="prediction-value">${p.predicted_soil}%</div>
+              </div>
+            `;
+          });
+
+          html += '</div>';
+          document.getElementById('predictionContent').innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Error loading predictions:', error);
+        document.getElementById('predictionContent').innerHTML = `
+          <p style="color: #dc3545; text-align: center;">
+            <i class="fas fa-exclamation-circle"></i> Không thể tải predictions
+          </p>
+        `;
+      }
+    }
+
+    // ============================================
+    // 3. LOAD WEATHER
+    // ============================================
+    async function loadWeather() {
+      try {
+        const response = await fetch('/api/ml/weather');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          const current = data.current;
+          const impact = data.irrigation_impact;
+
+          let alertClass = 'success';
+          if (impact.should_skip) {
+            alertClass = 'danger';
+          } else if (impact.rain_probability > 50) {
+            alertClass = 'warning';
+          }
+
+          document.getElementById('weatherContent').innerHTML = `
+            <div class="weather-current">
+              <div class="weather-item">
+                <i class="fas fa-temperature-high"></i>
+                <div class="weather-value">${current.temp}°C</div>
+                <div class="weather-label">Nhiệt độ</div>
+              </div>
+              <div class="weather-item">
+                <i class="fas fa-tint"></i>
+                <div class="weather-value">${current.humidity}%</div>
+                <div class="weather-label">Độ ẩm KK</div>
+              </div>
+              <div class="weather-item">
+                <i class="fas fa-cloud-rain"></i>
+                <div class="weather-value">${impact.rain_probability}%</div>
+                <div class="weather-label">Xác suất mưa</div>
+              </div>
+              <div class="weather-item">
+                <i class="fas fa-wind"></i>
+                <div class="weather-value">${current.wind_speed}m/s</div>
+                <div class="weather-label">Gió</div>
+              </div>
+            </div>
+            
+            <div class="weather-alert ${alertClass}">
+              <strong><i class="fas fa-info-circle"></i> Impact Analysis:</strong>
+              <div style="margin-top: 8px;">${impact.reason}</div>
+              <div style="margin-top: 8px; font-weight: 600;">
+                <i class="fas fa-lightbulb"></i> ${impact.recommendation}
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading weather:', error);
+        document.getElementById('weatherContent').innerHTML = `
+          <p style="color: #dc3545; text-align: center;">
+            <i class="fas fa-exclamation-circle"></i> Không thể tải weather data
+          </p>
+        `;
+      }
+    }
+
+    // ============================================
+    // 4. LOAD ANOMALIES
+    // ============================================
+    async function loadAnomalies() {
+      try {
+        const response = await fetch('/api/ml/anomaly');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          const anomalies = data.anomalies;
+          const health = data.system_health;
+
+          let healthBadge = '';
+          if (health === 'GOOD') {
+            healthBadge = '<span class="status-badge good"><i class="fas fa-check-circle"></i> System Healthy</span>';
+          } else if (health === 'WARNING') {
+            healthBadge = '<span class="status-badge warning"><i class="fas fa-exclamation-triangle"></i> Warnings Detected</span>';
+          } else {
+            healthBadge = '<span class="status-badge critical"><i class="fas fa-times-circle"></i> Critical Issues</span>';
+          }
+
+          let html = `
+            <div style="text-align: center; margin-bottom: 20px;">
+              ${healthBadge}
+            </div>
+          `;
+
+          if (anomalies.length === 0) {
+            html += `
+              <div style="text-align: center; padding: 30px; color: #28a745;">
+                <i class="fas fa-shield-alt" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                <div style="font-size: 1.2rem; font-weight: 600;">Không phát hiện vấn đề</div>
+                <div style="font-size: 0.9rem; margin-top: 5px; opacity: 0.8;">Hệ thống hoạt động bình thường</div>
+              </div>
+            `;
+          } else {
+            html += '<div class="anomaly-list">';
+            anomalies.forEach(a => {
+              const severityClass = a.severity.toLowerCase();
+              const icon = {
+                'INFO': 'fa-info-circle',
+                'WARNING': 'fa-exclamation-triangle',
+                'CRITICAL': 'fa-times-circle'
+              }[a.severity] || 'fa-question-circle';
+
+              const time = new Date(a.timestamp).toLocaleString('vi-VN');
+
+              html += `
+                <div class="anomaly-item ${severityClass}">
+                  <div class="anomaly-header">
+                    <div class="anomaly-type">
+                      <i class="fas ${icon}"></i> ${a.type.replace(/_/g, ' ').toUpperCase()}
+                    </div>
+                    <div class="anomaly-severity ${severityClass}">${a.severity}</div>
+                  </div>
+                  <div class="anomaly-message">${a.message}</div>
+                  <div class="anomaly-time"><i class="fas fa-clock"></i> ${time}</div>
+                </div>
+              `;
+            });
+            html += '</div>';
+          }
+
+          document.getElementById('anomalyContent').innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Error loading anomalies:', error);
+        document.getElementById('anomalyContent').innerHTML = `
+          <p style="color: #dc3545; text-align: center;">
+            <i class="fas fa-exclamation-circle"></i> Không thể tải anomaly data
+          </p>
+        `;
+      }
+    }
+
+    // ============================================
+    // 5. PREDICTION CHART
+    // ============================================
+    async function initPredictionChart() {
+      try {
+        // Get actual data
+        const actualResponse = await fetch('/api/logs?range=realtime');
+        const actualData = await actualResponse.json();
+
+        // Get predictions
+        const predResponse = await fetch('/api/ml/predict');
+        const predData = await predResponse.json();
+
+        if (predData.status === 'success') {
+          const ctx = document.getElementById('predictionChart').getContext('2d');
+
+          // Prepare data
+          const actualLabels = actualData.map(d => {
+            const date = new Date(d.ts);
+            return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          });
+
+          const actualValues = actualData.map(d => d.soil);
+
+          const predLabels = predData.predictions.map(p => {
+            const date = new Date(p.timestamp);
+            return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          });
+
+          const predValues = predData.predictions.map(p => p.predicted_soil);
+
+          // Combine labels
+          const allLabels = [...actualLabels, ...predLabels];
+
+          predictionChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: allLabels,
+              datasets: [
+                {
+                  label: 'Actual (Past)',
+                  data: [...actualValues, ...Array(predValues.length).fill(null)],
+                  borderColor: '#667eea',
+                  backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                  borderWidth: 3,
+                  tension: 0.4,
+                  pointRadius: 4,
+                  pointBackgroundColor: '#667eea',
+                  fill: true
+                },
+                {
+                  label: 'Predicted (Future)',
+                  data: [...Array(actualValues.length).fill(null), ...predValues],
+                  borderColor: '#f093fb',
+                  backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                  borderWidth: 3,
+                  borderDash: [5, 5],
+                  tension: 0.4,
+                  pointRadius: 4,
+                  pointBackgroundColor: '#f093fb',
+                  fill: true
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: 'top',
+                  labels: {
+                    font: { size: 14, weight: 'bold' },
+                    padding: 15
+                  }
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  padding: 12,
+                  callbacks: {
+                    label: function (context) {
+                      return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  max: 100,
+                  ticks: {
+                    callback: function (value) {
+                      return value + '%';
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error creating chart:', error);
+      }
+    }
+
+    // ============================================
+    // INITIALIZE
+    // ============================================
+    async function initialize() {
+      console.log('🤖 Initializing ML Dashboard...');
+
+      await Promise.all([
+        loadRecommendation(),
+        loadPredictions(),
+        loadWeather(),
+        loadAnomalies(),
+        initPredictionChart()
+      ]);
+
+      console.log('✅ ML Dashboard loaded!');
+    }
+
+    // Load on page load
+    initialize();
+
+    // Refresh every 30 seconds
+    setInterval(() => {
+      loadRecommendation();
+      loadPredictions();
+      loadWeather();
+      loadAnomalies();
+    }, 30000);
+  </script>
+</body>
+
+</html>

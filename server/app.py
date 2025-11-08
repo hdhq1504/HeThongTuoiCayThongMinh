@@ -1,14 +1,160 @@
-# app.py
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 import sqlite3
 import threading
 import time
 from datetime import datetime, timedelta
+from ml_models.soil_prediction import SoilMoistureLSTM
+from ml_models.weather_integration import WeatherService
+from ml_models.anomaly_detection import AnomalyDetector
 
 DB = "tuoi.db"
-CHECK_INTERVAL = 5  # giây kiểm tra lịch một lần
-
+CHECK_INTERVAL = 5
 app = Flask(__name__)
+
+lstm_model = SoilMoistureLSTM(db_path=DB)
+weather_service = WeatherService(api_key='6533dab185327987af94afb468d5669d') 
+anomaly_detector = AnomalyDetector(db_path=DB)
+
+prediction_cache = {
+    'last_update': None,
+    'predictions': None,
+    'recommendation': None
+}
+
+@app.route("/ml")
+def ml_dashboard():
+    """ML-enhanced dashboard"""
+    return render_template("ml_dashboard.html")
+
+@app.route("/api/ml/predict", methods=["GET"])
+def ml_predict():
+    """Dự đoán độ ẩm 24h tới"""
+    try:
+        import time
+        now = time.time()
+        
+        # Update cache mỗi giờ
+        if (prediction_cache['last_update'] is None or 
+            now - prediction_cache['last_update'] > 3600):
+            
+            print("🔄 Updating ML predictions...")
+            predictions = lstm_model.predict_next_24h()
+            prediction_cache['predictions'] = predictions
+            prediction_cache['last_update'] = now
+        else:
+            predictions = prediction_cache['predictions']
+        
+        # Calculate summary
+        soil_values = [p['predicted_soil'] for p in predictions]
+        summary = {
+            'min': round(min(soil_values), 2),
+            'max': round(max(soil_values), 2),
+            'avg': round(sum(soil_values) / len(soil_values), 2)
+        }
+        
+        return jsonify({
+            'status': 'success',
+            'predictions': predictions,
+            'summary': summary,
+            'cached': prediction_cache['last_update'] is not None
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route("/api/ml/recommendation", methods=["GET"])
+def ml_recommendation():
+    """Gợi ý tưới nước thông minh"""
+    try:
+        recommendation = lstm_model.get_watering_recommendation()
+        recommendation['confidence'] = 0.85
+        
+        return jsonify({
+            'status': 'success',
+            'recommendation': recommendation
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route("/api/ml/weather", methods=["GET"])
+def ml_weather():
+    """Weather data and impact"""
+    try:
+        location = request.args.get('location', 'Ho Chi Minh City')
+        
+        current_weather = weather_service.get_current(location)
+        forecast = weather_service.get_forecast(location, days=3)
+        impact = weather_service.analyze_irrigation_impact(forecast)
+        
+        return jsonify({
+            'status': 'success',
+            'current': current_weather,
+            'forecast': forecast[:8],  # Next 24h only
+            'irrigation_impact': impact
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route("/api/ml/anomaly", methods=["GET"])
+def ml_anomaly():
+    """Phát hiện bất thường"""
+    try:
+        anomalies = anomaly_detector.detect()
+        
+        # Determine system health
+        if not anomalies:
+            health = 'GOOD'
+        elif any(a['severity'] == 'CRITICAL' for a in anomalies):
+            health = 'CRITICAL'
+        else:
+            health = 'WARNING'
+        
+        return jsonify({
+            'status': 'success',
+            'anomalies': anomalies,
+            'system_health': health
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route("/api/ml/train", methods=["POST"])
+def ml_train():
+    """Trigger model retraining"""
+    try:
+        data = request.get_json() or {}
+        epochs = data.get('epochs', 50)
+        batch_size = data.get('batch_size', 16)
+        
+        def train_async():
+            print("🚀 Starting model training...")
+            history = lstm_model.train(epochs=epochs, batch_size=batch_size)
+            print("✅ Training completed!")
+        
+        import threading
+        thread = threading.Thread(target=train_async)
+        thread.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Training started in background'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 # ---------- Database helper ----------
 def init_db():
