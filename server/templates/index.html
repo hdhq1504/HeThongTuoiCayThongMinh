@@ -1,0 +1,2055 @@
+<!-- templates/index.html -->
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌱 Hệ Thống Tưới Cây Thông Minh</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      animation: fadeInDown 0.8s ease;
+      position: relative;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+    
+    .wifi-status {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      border-radius: 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .wifi-status:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .wifi-status.connected {
+      color: #10ac84;
+    }
+    
+    .wifi-status.disconnected {
+      color: #ee5a6f;
+    }
+    
+    .wifi-icon {
+      font-size: 1.3rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .wifi-details {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+    }
+    
+    .wifi-label {
+      font-size: 0.75rem;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .wifi-value {
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    
+    .rssi-bar {
+      display: inline-flex;
+      gap: 2px;
+      margin-left: 5px;
+    }
+    
+    .rssi-bar span {
+      width: 3px;
+      height: 10px;
+      background: currentColor;
+      border-radius: 1px;
+      opacity: 0.3;
+      transition: opacity 0.3s ease;
+    }
+    
+    .rssi-bar span.active {
+      opacity: 1;
+    }
+    
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.8s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .card-header i {
+      font-size: 1.8rem;
+      color: #667eea;
+    }
+    
+    .card-header h3 {
+      font-size: 1.4rem;
+      color: #333;
+    }
+    
+    .form-group {
+      margin-bottom: 18px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+      font-size: 0.95rem;
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="time"],
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+    }
+    
+    .form-group input[type="text"]:focus,
+    .form-group input[type="time"]:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    
+    .checkbox-group:hover {
+      background: #e9ecef;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #667eea;
+    }
+    
+    .checkbox-group label {
+      cursor: pointer;
+      margin: 0;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      flex: 1;
+    }
+    
+    .btn-success:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+      color: white;
+      flex: 1;
+    }
+    
+    .btn-danger:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(238, 9, 121, 0.4);
+    }
+    
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .status-item {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .status-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .status-value.active {
+      color: #11998e;
+    }
+    
+    .status-value.inactive {
+      color: #ee0979;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .chart-card {
+      grid-column: 1 / -1;
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+    
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+      margin-top: 20px;
+    }
+    
+    .pump-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .pump-status.on {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .pump-status.off {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .schedule-display {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+      
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .button-group {
+        flex-direction: column;
+      }
+      
+      .chart-wrapper {
+        height: 300px;
+      }
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Moisture Display Styles */
+    .moisture-display {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .moisture-circle {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 20px;
+    }
+    
+    .moisture-ring {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    
+    .moisture-ring-bg {
+      fill: none;
+      stroke: #e9ecef;
+      stroke-width: 15;
+    }
+    
+    .moisture-ring-fill {
+      fill: none;
+      stroke: url(#moistureGradient);
+      stroke-width: 15;
+      stroke-linecap: round;
+      stroke-dasharray: 534;
+      stroke-dashoffset: 534;
+      transition: stroke-dashoffset 1s ease, stroke 0.5s ease;
+    }
+    
+    .moisture-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    
+    .moisture-number {
+      font-size: 4rem;
+      font-weight: bold;
+      color: #667eea;
+      line-height: 1;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .moisture-unit {
+      font-size: 1.5rem;
+      color: #999;
+      margin-top: -10px;
+    }
+    
+    .moisture-status {
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: 25px;
+      display: inline-block;
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    .moisture-status.dry {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+      color: white;
+    }
+    
+    .moisture-status.low {
+      background: linear-gradient(135deg, #feca57, #ff9ff3);
+      color: #333;
+    }
+    
+    .moisture-status.optimal {
+      background: linear-gradient(135deg, #48dbfb, #0abde3);
+      color: white;
+    }
+    
+    .moisture-status.high {
+      background: linear-gradient(135deg, #1dd1a1, #10ac84);
+      color: white;
+    }
+    
+    .moisture-status.wet {
+      background: linear-gradient(135deg, #5f27cd, #341f97);
+      color: white;
+    }
+    
+    .last-update {
+      font-size: 0.9rem;
+      color: #999;
+      font-style: italic;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+    }
+    
+    /* Pump Control Styles */
+    .pump-control-container {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .pump-visual {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 30px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.1);
+      transition: all 0.5s ease;
+    }
+    
+    .pump-visual.active {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      box-shadow: 0 0 30px rgba(17, 153, 142, 0.5), inset 0 4px 8px rgba(0,0,0,0.1);
+      animation: pumpPulse 2s ease-in-out infinite;
+    }
+    
+    .pump-icon {
+      font-size: 5rem;
+      color: #999;
+      transition: all 0.5s ease;
+    }
+    
+    .pump-visual.active .pump-icon {
+      color: white;
+      animation: rotate 2s linear infinite;
+    }
+    
+    .water-drops {
+      position: absolute;
+      bottom: -10px;
+      display: flex;
+      gap: 15px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .pump-visual.active .water-drops {
+      opacity: 1;
+    }
+    
+    .water-drops i {
+      color: #4fc3f7;
+      font-size: 1.5rem;
+      animation: drop 1.5s ease-in-out infinite;
+    }
+    
+    .water-drops i:nth-child(2) {
+      animation-delay: 0.5s;
+    }
+    
+    .water-drops i:nth-child(3) {
+      animation-delay: 1s;
+    }
+    
+    .pump-status-big {
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+      color: white;
+      transition: all 0.5s ease;
+    }
+    
+    .pump-status-big.active {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .pump-status-big .status-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .pump-status-big .status-text {
+      font-size: 1.5rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    /* Toggle Switch */
+    .toggle-switch-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 140px;
+      height: 60px;
+      cursor: pointer;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+      border-radius: 60px;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      box-shadow: 0 5px 15px rgba(238, 9, 121, 0.3);
+    }
+    
+    .toggle-button {
+      position: absolute;
+      content: "";
+      height: 50px;
+      width: 50px;
+      left: 5px;
+      bottom: 5px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #ee0979;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    
+    .toggle-switch input:checked + .toggle-slider {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      box-shadow: 0 5px 15px rgba(17, 153, 142, 0.3);
+    }
+    
+    .toggle-switch input:checked + .toggle-slider .toggle-button {
+      transform: translateX(80px);
+      color: #11998e;
+    }
+    
+    .toggle-switch:active .toggle-button {
+      transform: scale(0.95);
+    }
+    
+    .toggle-label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    .off-label {
+      color: #ee0979;
+    }
+    
+    .on-label {
+      color: #11998e;
+    }
+    
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    @keyframes drop {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: translateY(20px) scale(0.8);
+        opacity: 0.5;
+      }
+      100% {
+        transform: translateY(40px) scale(0.5);
+        opacity: 0;
+      }
+    }
+    
+    @keyframes pumpPulse {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(17, 153, 142, 0.5), inset 0 4px 8px rgba(0,0,0,0.1);
+      }
+      50% {
+        box-shadow: 0 0 40px rgba(17, 153, 142, 0.8), inset 0 4px 8px rgba(0,0,0,0.1);
+      }
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    
+    .loading-overlay.active {
+      display: flex;
+    }
+    
+    .loading-content {
+      background: white;
+      padding: 30px 50px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    .loading-content .spinner {
+      margin: 0 auto 15px;
+    }
+    
+    /* ============================================
+       NEW DESIGN STYLES
+       ============================================ */
+    
+    /* Main Pump Control Button */
+    .main-control-card {
+      grid-column: 1 / -1;
+    }
+    
+    .main-pump-control {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .btn-main-pump {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-main-pump::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn-main-pump:active::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .btn-main-pump.off {
+      background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+    }
+    
+    .btn-main-pump.off::before {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-main-pump.on {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      animation: pumpPulse 2s ease-in-out infinite;
+    }
+    
+    .btn-main-pump.on::before {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-main-pump:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+    }
+    
+    .btn-main-pump:active {
+      transform: scale(0.95);
+    }
+    
+    .pump-icon-main {
+      font-size: 6rem;
+      color: white;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .btn-main-pump.on .pump-icon-main i {
+      animation: rotate 2s linear infinite;
+    }
+    
+    .pump-status-text {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Auto Moisture Control */
+    .auto-moisture-control {
+      padding: 30px;
+      text-align: center;
+    }
+    
+    /* WiFi Config */
+    .wifi-reset-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+    }
+    
+    .wifi-reset-btn:active {
+      transform: translateY(0);
+    }
+    
+    .wifi-reset-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    
+    /* Schedule Manager */
+    .schedule-manager {
+      padding: 20px;
+    }
+    
+    .schedule-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .schedule-list {
+      margin: 20px 0;
+    }
+    
+    .schedule-item {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 20px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      transition: transform 0.3s ease;
+    }
+    
+    .schedule-item:hover {
+      transform: translateX(5px);
+    }
+    
+    .schedule-info {
+      flex: 1;
+    }
+    
+    .schedule-time {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .schedule-time i {
+      color: #667eea;
+    }
+    
+    .schedule-status {
+      font-size: 0.9rem;
+      padding: 5px 15px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 600;
+    }
+    
+    .schedule-status.active {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .schedule-status.inactive {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .btn-edit-schedule {
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-edit-schedule:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+    }
+    
+    .schedule-form {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 15px;
+      animation: fadeInDown 0.3s ease;
+    }
+    
+    /* Chart Filter */
+    .chart-filter {
+      display: flex;
+      gap: 10px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .filter-btn {
+      padding: 12px 25px;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .filter-btn:hover {
+      border-color: #667eea;
+      color: #667eea;
+      transform: translateY(-2px);
+    }
+    
+    .filter-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .filter-btn i {
+      font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .btn-main-pump {
+        width: 220px;
+        height: 220px;
+      }
+      
+      .pump-icon-main {
+        font-size: 4rem;
+      }
+      
+      .pump-status-text {
+        font-size: 1.3rem;
+      }
+      
+      .chart-filter {
+        flex-direction: column;
+      }
+      
+      .filter-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <!-- WiFi Status Badge -->
+      <div class="wifi-status disconnected" id="wifiStatus">
+        <div class="wifi-icon">
+          <i class="fas fa-wifi"></i>
+        </div>
+        <div class="wifi-details">
+          <div class="wifi-label">ESP32</div>
+          <div class="wifi-value" id="wifiText">Disconnected</div>
+        </div>
+        <div class="rssi-bar" id="rssiBar">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      
+      <h1><i class="fas fa-seedling"></i> Hệ Thống Tưới Cây Thông Minh</h1>
+      <p>Giám sát và điều khiển tự động - IoT Dashboard</p>
+    </div>
+
+    <div class="dashboard">
+      <!-- 1. NÚT ĐIỀU KHIỂN CHÍNH - BẬT/TẮT MÁY BƠM -->
+      <div class="card main-control-card">
+        <div class="card-header">
+          <i class="fas fa-power-off"></i>
+          <h3>Điều Khiển Máy Bơm</h3>
+        </div>
+        
+        <!-- Current Mode Display -->
+        <div style="text-align: center; margin: 10px 0 20px 0;">
+          <div id="currentMode" style="display: inline-block; padding: 10px 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; font-weight: 600; font-size: 1.1rem;">
+            <i class="fas fa-hand-pointer"></i> CHỂ ĐỘ: THỦ CÔNG
+          </div>
+        </div>
+        
+        <div class="main-pump-control">
+          <button class="btn-main-pump off" id="mainPumpBtn" onclick="toggleMainPump()">
+            <div class="pump-icon-main">
+              <i class="fas fa-power-off"></i>
+            </div>
+            <div class="pump-status-text">TẮT MÁY BƠM</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. AUTO BẬT KHI ĐỘ ẨM THẤP -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-robot"></i>
+          <h3>Chế Độ Tự Động Theo Độ Ẩm</h3>
+        </div>
+        
+        <div class="auto-moisture-control">
+          <div class="toggle-switch-container" style="justify-content: center;">
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoMoistureToggle" {{ 'checked' if config.auto else '' }} onchange="toggleAutoMoisture(this.checked)">
+              <span class="toggle-slider">
+                <span class="toggle-button">
+                  <i class="fas fa-robot"></i>
+                </span>
+              </span>
+            </label>
+            <div class="toggle-label">
+              <span class="off-label">TẮT AUTO</span>
+              <span class="on-label">BẬT AUTO</span>
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 10px; color: #856404;">
+            <div style="font-weight: 600; margin-bottom: 5px;">
+              <i class="fas fa-lightbulb"></i> Logic Tự Động
+            </div>
+            <div style="font-size: 0.85rem;">
+              🔵 Bật bơm khi độ ẩm < <strong>45%</strong><br>
+              🔴 Tắt bơm khi độ ẩm > <strong>60%</strong>
+            </div>
+            <div style="margin-top: 8px; font-size: 0.8rem; opacity: 0.8;">
+              <i class="fas fa-microchip"></i> Xử lý bởi ESP32
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. ĐỘ ẨM HIỆN TẠI -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-droplet"></i>
+          <h3>Độ Ẩm Hiện Tại</h3>
+        </div>
+
+        <div class="moisture-display">
+          <div class="moisture-circle">
+            <svg class="moisture-ring" viewBox="0 0 200 200">
+              <circle class="moisture-ring-bg" cx="100" cy="100" r="85" />
+              <circle class="moisture-ring-fill" id="moistureRing" cx="100" cy="100" r="85" />
+            </svg>
+            <div class="moisture-value">
+              <div class="moisture-number" id="moistureValue">--</div>
+              <div class="moisture-unit">%</div>
+            </div>
+          </div>
+          <div class="moisture-status" id="moistureStatus">
+            <i class="fas fa-spinner fa-spin"></i> Đang đợi dữ liệu...
+          </div>
+          <div class="last-update" id="lastUpdate">Chưa có dữ liệu</div>
+        </div>
+      </div>
+
+      <!-- 4. CẤU HÌNH WIFI ESP32 -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-wifi"></i>
+          <h3>Cấu Hình WiFi ESP32</h3>
+        </div>
+
+        <div class="wifi-config-section" style="padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <i class="fas fa-info-circle" style="font-size: 2em;"></i>
+              <div>
+                <h4 style="margin: 0 0 8px 0; font-size: 1.1em;">Hướng Dẫn Cấu Hình WiFi</h4>
+                <p style="margin: 0; opacity: 0.95; line-height: 1.6;">
+                  Nhấn nút bên dưới để reset WiFi. ESP32 sẽ tạo điểm phát WiFi để bạn cấu hình lại.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="resetWiFi()" class="wifi-reset-btn" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s;">
+            <i class="fas fa-sync-alt"></i>
+            Reset & Cấu Hình WiFi Mới
+          </button>
+
+          <div id="wifiInstructions" style="display: none; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #28a745;">
+            <h4 style="margin: 0 0 15px 0; color: #28a745;"><i class="fas fa-check-circle"></i> Lệnh đã gửi! Làm theo các bước sau:</h4>
+            <ol style="margin: 0; padding-left: 20px; line-height: 2;">
+              <li><strong>ESP32 sẽ khởi động lại</strong> sau vài giây</li>
+              <li><strong>Kết nối WiFi:</strong> <code style="background: white; padding: 3px 8px; border-radius: 4px;">ESP32_TuoiCay</code></li>
+              <li><strong>Mật khẩu:</strong> <code style="background: white; padding: 3px 8px; border-radius: 4px;">12345678</code></li>
+              <li><strong>Mở trình duyệt</strong> đến: <code style="background: white; padding: 3px 8px; border-radius: 4px;">192.168.4.1</code></li>
+              <li><strong>Chọn WiFi mới</strong> từ danh sách và nhập mật khẩu</li>
+              <li><strong>Chờ ESP32 kết nối</strong> - Trang này sẽ tự động cập nhật!</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. LỊCH HẸN TƯỚI -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-calendar-clock"></i>
+          <h3>Lịch Hẹn Tưới</h3>
+        </div>
+
+        <div class="schedule-manager">
+          <!-- Toggle Schedule -->
+          <div class="schedule-toggle">
+            <label class="toggle-switch">
+              <input type="checkbox" id="scheduleToggle" {{ 'checked' if config.use_schedule else '' }} onchange="toggleSchedule(this.checked)">
+              <span class="toggle-slider">
+                <span class="toggle-button">
+                  <i class="fas fa-clock"></i>
+                </span>
+              </span>
+            </label>
+            <span style="font-weight: 600; margin-left: 10px;">Kích hoạt lịch hẹn</span>
+          </div>
+
+          <!-- Schedule List -->
+          <div class="schedule-list" id="scheduleList">
+            <div class="schedule-item" id="schedule1">
+              <div class="schedule-info">
+                <div class="schedule-time">
+                  <i class="fas fa-clock"></i>
+                  <span id="scheduleTimeDisplay">{{ config.start }} - {{ config.end }}</span>
+                </div>
+                <div class="schedule-status {{ 'active' if config.use_schedule else 'inactive' }}">
+                  {{ 'Đang hoạt động' if config.use_schedule else 'Chưa kích hoạt' }}
+                </div>
+              </div>
+              <button class="btn-edit-schedule" onclick="editSchedule()">
+                <i class="fas fa-edit"></i> Sửa
+              </button>
+            </div>
+          </div>
+
+          <!-- Edit Schedule Form (Hidden by default) -->
+          <div class="schedule-form" id="scheduleForm" style="display: none;">
+            <div class="form-group">
+              <label><i class="fas fa-play-circle"></i> Giờ bắt đầu</label>
+              <input type="time" id="scheduleStart" value="{{ config.start }}">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-stop-circle"></i> Giờ kết thúc</label>
+              <input type="time" id="scheduleEnd" value="{{ config.end }}">
+            </div>
+            <div class="button-group">
+              <button class="btn btn-success" onclick="saveSchedule()">
+                <i class="fas fa-save"></i> Lưu
+              </button>
+              <button class="btn btn-danger" onclick="deleteSchedule()">
+                <i class="fas fa-trash"></i> Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. LỊCH SỬ ĐỘ ẨM - Full width -->
+      <div class="chart-card">
+        <div class="card-header">
+          <i class="fas fa-chart-line"></i>
+          <h3>Lịch Sử Độ Ẩm</h3>
+        </div>
+        
+        <!-- Time Range Filter -->
+        <div class="chart-filter">
+          <button class="filter-btn active" data-range="realtime" onclick="changeTimeRange('realtime')">
+            <i class="fas fa-bolt"></i> Realtime
+          </button>
+          <button class="filter-btn" data-range="hour" onclick="changeTimeRange('hour')">
+            <i class="fas fa-clock"></i> 1 Giờ
+          </button>
+          <button class="filter-btn" data-range="day" onclick="changeTimeRange('day')">
+            <i class="fas fa-calendar-day"></i> 1 Ngày
+          </button>
+          <button class="filter-btn" data-range="week" onclick="changeTimeRange('week')">
+            <i class="fas fa-calendar-week"></i> 1 Tuần
+          </button>
+        </div>
+        
+        <div class="chart-wrapper">
+          <canvas id="chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Hidden SVG for gradient -->
+      <svg width="0" height="0">
+        <defs>
+          <linearGradient id="moistureGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#f093fb;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-content">
+        <div class="spinner"></div>
+        <div style="font-size: 1.2rem; font-weight: 600; color: #333;">Đang xử lý...</div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // GLOBAL STATE
+    // ============================================
+    let myChart = null;
+    let chartInitialized = false;
+    let currentTimeRange = 'realtime';
+    let isEditingSchedule = false;  // Flag to prevent sync override during edit
+    // eslint-disable-next-line
+    let currentPumpState = {{ (config.pump_cmd == 1)|tojson }};
+    // eslint-disable-next-line
+    let autoMoistureEnabled = {{ (config.auto == 1)|tojson }};
+    // eslint-disable-next-line
+    let scheduleEnabled = {{ (config.use_schedule == 1)|tojson }};
+    
+    // ============================================
+    // 1. MAIN PUMP CONTROL - Nút chính bật/tắt
+    // ============================================
+    async function toggleMainPump() {
+      const mainBtn = document.getElementById('mainPumpBtn');
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      
+      // Toggle state
+      const newState = !currentPumpState;
+      
+      try {
+        mainBtn.disabled = true;
+        loadingOverlay.classList.add('active');
+        
+        const response = await fetch('/api/set', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({pump_cmd: newState ? 1 : 0})
+        });
+        
+        if (response.ok) {
+          currentPumpState = newState;
+          updateMainPumpUI();
+          console.log(`✅ Máy bơm: ${newState ? 'BẬT' : 'TẮT'}`);
+        } else {
+          throw new Error('Failed to control pump');
+        }
+      } catch (error) {
+        console.error('❌ Lỗi:', error);
+        alert('Không thể điều khiển máy bơm!');
+      } finally {
+        loadingOverlay.classList.remove('active');
+        mainBtn.disabled = false;
+      }
+    }
+    
+    function updateMainPumpUI() {
+      const mainBtn = document.getElementById('mainPumpBtn');
+      const icon = mainBtn.querySelector('.pump-icon-main i');
+      const text = mainBtn.querySelector('.pump-status-text');
+      
+      if (currentPumpState) {
+        mainBtn.classList.remove('off');
+        mainBtn.classList.add('on');
+        icon.className = 'fas fa-fan';
+        text.textContent = 'BẬT MÁY BƠM';
+      } else {
+        mainBtn.classList.remove('on');
+        mainBtn.classList.add('off');
+        icon.className = 'fas fa-power-off';
+        text.textContent = 'TẮT MÁY BƠM';
+      }
+      
+      // Update current mode display
+      updateModeDisplay();
+    }
+    
+    function updateModeDisplay() {
+      const modeDisplay = document.getElementById('currentMode');
+      
+      if (scheduleEnabled) {
+        modeDisplay.innerHTML = '<i class="fas fa-calendar-clock"></i> CHỂ ĐỘ: TỰ ĐỘNG THEO LỊCH';
+        modeDisplay.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+      } else if (autoMoistureEnabled) {
+        modeDisplay.innerHTML = '<i class="fas fa-robot"></i> CHỂ ĐỘ: TỰ ĐỘNG ĐỘ ẨM';
+        modeDisplay.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+      } else {
+        modeDisplay.innerHTML = '<i class="fas fa-hand-pointer"></i> CHỂ ĐỘ: THỦ CÔNG';
+        modeDisplay.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      }
+    }
+    
+    // ============================================
+    // 2. AUTO MOISTURE MODE
+    // ============================================
+    async function toggleAutoMoisture(enabled) {
+      try {
+        const response = await fetch('/api/set', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({auto: enabled ? 1 : 0})
+        });
+        
+        if (response.ok) {
+          autoMoistureEnabled = enabled;
+          
+          // Nếu bật auto, tắt schedule
+          if (enabled) {
+            scheduleEnabled = false;
+            document.getElementById('scheduleToggle').checked = false;
+            updateScheduleStatus();
+          }
+          
+          console.log(`🤖 Auto moisture: ${enabled ? 'BẬT' : 'TẮT'}`);
+        }
+      } catch (error) {
+        console.error('❌ Lỗi auto moisture:', error);
+      }
+    }
+    
+    // ============================================
+    // 3. WIFI CONFIGURATION
+    // ============================================
+    async function resetWiFi() {
+      if (!confirm('⚠️ ESP32 sẽ khởi động lại và vào chế độ cấu hình WiFi.\n\nBạn có chắc muốn tiếp tục?')) {
+        return;
+      }
+      
+      try {
+        const btn = document.querySelector('.wifi-reset-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi lệnh...';
+        
+        const response = await fetch('/api/reset_wifi', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'}
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ WiFi reset command sent:', data);
+          
+          // Show instructions
+          document.getElementById('wifiInstructions').style.display = 'block';
+          
+          // Update button
+          btn.innerHTML = '<i class="fas fa-check"></i> Lệnh đã gửi!';
+          btn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+          
+          // Show alert
+          alert('✅ Lệnh reset WiFi đã gửi!\n\nESP32 sẽ khởi động lại.\nKết nối WiFi "ESP32_TuoiCay" (mật khẩu: 12345678)\nMở trình duyệt: 192.168.4.1');
+          
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Reset & Cấu Hình WiFi Mới';
+            btn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+          }, 10000);
+          
+        } else {
+          throw new Error('Server error');
+        }
+      } catch (error) {
+        console.error('❌ WiFi reset error:', error);
+        alert('❌ Lỗi khi gửi lệnh reset WiFi. Vui lòng thử lại!');
+        
+        const btn = document.querySelector('.wifi-reset-btn');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Reset & Cấu Hình WiFi Mới';
+      }
+    }
+
+    // ============================================
+    // 4. SCHEDULE MANAGER
+    // ============================================
+    async function toggleSchedule(enabled) {
+      try {
+        const response = await fetch('/api/set', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({use_schedule: enabled ? 1 : 0})
+        });
+        
+        if (response.ok) {
+          scheduleEnabled = enabled;
+          updateScheduleStatus();
+          
+          // Nếu bật schedule, tắt auto
+          if (enabled) {
+            autoMoistureEnabled = false;
+            document.getElementById('autoMoistureToggle').checked = false;
+          }
+          
+          console.log(`⏰ Schedule: ${enabled ? 'BẬT' : 'TẮT'}`);
+        }
+      } catch (error) {
+        console.error('❌ Lỗi schedule:', error);
+      }
+    }
+    
+    function editSchedule() {
+      const form = document.getElementById('scheduleForm');
+      const list = document.getElementById('scheduleList');
+      
+      if (form.style.display === 'none') {
+        // Opening editor
+        form.style.display = 'block';
+        list.style.display = 'none';
+        isEditingSchedule = true;
+        console.log('📝 Editing schedule - sync paused');
+      } else {
+        // Closing editor
+        form.style.display = 'none';
+        list.style.display = 'block';
+        isEditingSchedule = false;
+        console.log('✅ Schedule editor closed - sync resumed');
+      }
+    }
+    
+    async function saveSchedule() {
+      const start = document.getElementById('scheduleStart').value;
+      const end = document.getElementById('scheduleEnd').value;
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      
+      if (!start || !end) {
+        alert('Vui lòng nhập đầy đủ thời gian!');
+        return;
+      }
+      
+      try {
+        loadingOverlay.classList.add('active');
+        
+        const response = await fetch('/api/set', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            start: start, 
+            end: end
+          })
+        });
+        
+        if (response.ok) {
+          // Update display immediately (no page reload)
+          document.getElementById('scheduleTimeDisplay').textContent = `${start} - ${end}`;
+          
+          // Close form and reset editing flag
+          editSchedule(); // This will set isEditingSchedule = false
+          
+          loadingOverlay.classList.remove('active');
+          
+          console.log(`💾 Đã lưu lịch: ${start} - ${end}`);
+          
+          // Show success message briefly
+          const modeDisplay = document.getElementById('currentMode');
+          const originalHTML = modeDisplay.innerHTML;
+          const originalBg = modeDisplay.style.background;
+          
+          modeDisplay.innerHTML = '<i class="fas fa-check-circle"></i> ĐÃ LƯU LỊCH!';
+          modeDisplay.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+          
+          setTimeout(() => {
+            modeDisplay.innerHTML = originalHTML;
+            modeDisplay.style.background = originalBg;
+          }, 2000);
+        } else {
+          throw new Error('Failed to save');
+        }
+      } catch (error) {
+        console.error('❌ Lỗi save schedule:', error);
+        loadingOverlay.classList.remove('active');
+        alert('Không thể lưu lịch! Vui lòng thử lại.');
+      }
+    }
+    
+    async function deleteSchedule() {
+      if (!confirm('Bạn có chắc muốn xóa lịch hẹn này?')) {
+        return;
+      }
+      
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      
+      try {
+        loadingOverlay.classList.add('active');
+        
+        const response = await fetch('/api/set', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({start: '00:00', end: '00:00', use_schedule: 0})
+        });
+        
+        if (response.ok) {
+          document.getElementById('scheduleTimeDisplay').textContent = '00:00 - 00:00';
+          document.getElementById('scheduleStart').value = '00:00';
+          document.getElementById('scheduleEnd').value = '00:00';
+          document.getElementById('scheduleToggle').checked = false;
+          scheduleEnabled = false;
+          updateScheduleStatus();
+          updateModeDisplay();
+          
+          // Close form
+          editSchedule();
+          
+          loadingOverlay.classList.remove('active');
+          
+          console.log('🗑️ Đã xóa lịch');
+          alert('Đã xóa lịch hẹn thành công!');
+        } else {
+          throw new Error('Failed to delete');
+        }
+      } catch (error) {
+        console.error('❌ Lỗi delete schedule:', error);
+        loadingOverlay.classList.remove('active');
+        alert('Không thể xóa lịch! Vui lòng thử lại.');
+      }
+    }
+    
+    function updateScheduleStatus() {
+      const statusElem = document.querySelector('.schedule-status');
+      if (scheduleEnabled) {
+        statusElem.className = 'schedule-status active';
+        statusElem.textContent = 'Đang hoạt động';
+      } else {
+        statusElem.className = 'schedule-status inactive';
+        statusElem.textContent = 'Chưa kích hoạt';
+      }
+    }
+    
+    // ============================================
+    // 4. SYNC STATE FROM SERVER
+    // ============================================
+    let isSyncing = false;
+    
+    async function syncState() {
+      if (isSyncing) return;
+      
+      try {
+        isSyncing = true;
+        const response = await fetch('/api/config');
+        const config = await response.json();
+        
+        // Sync pump state
+        const serverPumpState = config.pump_cmd === 1;
+        if (serverPumpState !== currentPumpState) {
+          console.log(`🔄 Pump state changed: ${serverPumpState ? 'ON' : 'OFF'}`);
+          currentPumpState = serverPumpState;
+          updateMainPumpUI();
+        }
+        
+        // Sync auto moisture
+        const serverAuto = config.auto === 1;
+        if (serverAuto !== autoMoistureEnabled) {
+          autoMoistureEnabled = serverAuto;
+          document.getElementById('autoMoistureToggle').checked = serverAuto;
+          updateModeDisplay();
+        }
+        
+        // Sync schedule
+        const serverSchedule = config.use_schedule === 1;
+        if (serverSchedule !== scheduleEnabled) {
+          scheduleEnabled = serverSchedule;
+          document.getElementById('scheduleToggle').checked = serverSchedule;
+          updateScheduleStatus();
+          updateModeDisplay();
+        }
+        
+        // Update schedule time display (only if not currently editing)
+        if (!isEditingSchedule) {
+          document.getElementById('scheduleTimeDisplay').textContent = `${config.start} - ${config.end}`;
+          document.getElementById('scheduleStart').value = config.start;
+          document.getElementById('scheduleEnd').value = config.end;
+        }
+        
+      } catch (error) {
+        console.error('Sync error:', error);
+      } finally {
+        isSyncing = false;
+      }
+    }
+    
+    // Initialize UI on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      updateMainPumpUI();
+      updateScheduleStatus();
+      updateModeDisplay();
+      document.getElementById('autoMoistureToggle').checked = autoMoistureEnabled;
+      document.getElementById('scheduleToggle').checked = scheduleEnabled;
+    });
+
+    // ============================================
+    // Update WiFi Status Display
+    // ============================================
+    function updateWiFiStatus(wifiConnected, rssi) {
+      const wifiStatus = document.getElementById('wifiStatus');
+      const wifiText = document.getElementById('wifiText');
+      const wifiIcon = wifiStatus.querySelector('.wifi-icon i');
+      const rssiBar = document.getElementById('rssiBar');
+      const rssiBars = rssiBar.querySelectorAll('span');
+      
+      if (wifiConnected) {
+        // ESP32 connected
+        wifiStatus.classList.remove('disconnected');
+        wifiStatus.classList.add('connected');
+        wifiText.textContent = 'Connected';
+        wifiIcon.className = 'fas fa-wifi';
+        
+        // RSSI bars (dBm to signal strength)
+        // Excellent: > -50, Good: -50 to -60, Fair: -60 to -70, Weak: < -70
+        let activeBars = 0;
+        if (rssi > -50) activeBars = 5;
+        else if (rssi > -60) activeBars = 4;
+        else if (rssi > -70) activeBars = 3;
+        else if (rssi > -80) activeBars = 2;
+        else activeBars = 1;
+        
+        rssiBars.forEach((bar, index) => {
+          if (index < activeBars) {
+            bar.classList.add('active');
+          } else {
+            bar.classList.remove('active');
+          }
+        });
+        
+        console.log(`📶 WiFi: ${rssi} dBm (${activeBars}/5 bars)`);
+      } else {
+        // ESP32 disconnected
+        wifiStatus.classList.remove('connected');
+        wifiStatus.classList.add('disconnected');
+        wifiText.textContent = 'Offline';
+        wifiIcon.className = 'fas fa-wifi-slash';
+        
+        // Clear all bars
+        rssiBars.forEach(bar => bar.classList.remove('active'));
+      }
+    }
+    
+    // Update moisture display
+    function updateMoistureDisplay(moisture) {
+      const moistureValue = document.getElementById('moistureValue');
+      const moistureRing = document.getElementById('moistureRing');
+      const moistureStatus = document.getElementById('moistureStatus');
+      const lastUpdate = document.getElementById('lastUpdate');
+      
+      // Update number
+      moistureValue.textContent = moisture.toFixed(1);
+      
+      // Update ring (534 is circumference of circle with r=85)
+      const offset = 534 - (534 * moisture / 100);
+      moistureRing.style.strokeDashoffset = offset;
+      
+      // Update status text and color
+      let statusText = '';
+      let statusClass = '';
+      
+      if (moisture < 20) {
+        statusText = '🏜️ Rất khô - Cần tưới ngay!';
+        statusClass = 'dry';
+      } else if (moisture < 40) {
+        statusText = '🌵 Khô - Nên tưới nước';
+        statusClass = 'low';
+      } else if (moisture < 60) {
+        statusText = '🌿 Tối ưu - Độ ẩm tốt';
+        statusClass = 'optimal';
+      } else if (moisture < 80) {
+        statusText = '💧 Ẩm - Đủ nước';
+        statusClass = 'high';
+      } else {
+        statusText = '🌊 Rất ẩm - Ngừng tưới';
+        statusClass = 'wet';
+      }
+      
+      moistureStatus.innerHTML = statusText;
+      moistureStatus.className = 'moisture-status ' + statusClass;
+      
+      // Update last update time
+      const now = new Date();
+      lastUpdate.textContent = 'Cập nhật: ' + now.toLocaleTimeString('vi-VN');
+    }
+
+    // Initialize chart
+    function initChart() {
+      const ctx = document.getElementById('chart').getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, 'rgba(102, 126, 234, 0.8)');
+      gradient.addColorStop(1, 'rgba(118, 75, 162, 0.1)');
+      
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Độ ẩm đất (%)',
+            data: [],
+            backgroundColor: gradient,
+            borderColor: '#667eea',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#667eea',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#764ba2',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 750,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: {
+                  size: 14,
+                  weight: 'bold'
+                },
+                color: '#333',
+                padding: 15
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              titleFont: {
+                size: 14,
+                weight: 'bold'
+              },
+              bodyFont: {
+                size: 13
+              },
+              displayColors: false,
+              callbacks: {
+                label: function(context) {
+                  return 'Độ ẩm: ' + context.parsed.y.toFixed(1) + '%';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                font: {
+                  size: 12
+                },
+                color: '#666',
+                callback: function(value) {
+                  return value + '%';
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  size: 11
+                },
+                color: '#666',
+                maxRotation: 45,
+                minRotation: 45
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+      
+      chartInitialized = true;
+    }
+
+    // Update chart with new data (smooth update)
+    async function updateChart() {
+      try {
+        // Call API with time range parameter
+        const res = await fetch(`/api/logs?range=${currentTimeRange}`);
+        let data = await res.json();
+        
+        console.log(`📊 Received ${data.length} records for ${currentTimeRange}`);
+        if (data.length > 0) {
+          console.log('  📅 First:', data[0].ts, '- Soil:', data[0].soil);
+          console.log('  📅 Last:', data[data.length-1].ts, '- Soil:', data[data.length-1].soil);
+        }
+        
+        if (data.length === 0) {
+          console.log(`⚠️ No data available for ${currentTimeRange} range`);
+          updateWiFiStatus(false, 0);
+          
+          // Show "no data" message on chart
+          if (myChart) {
+            myChart.data.labels = ['Không có dữ liệu'];
+            myChart.data.datasets[0].data = [0];
+            myChart.update('none');
+          }
+          return;
+        }
+        
+        // Get latest data point
+        const latest = data[data.length - 1];
+        
+        // Update moisture display
+        updateMoistureDisplay(latest.soil);
+        
+        // Update WiFi status
+        const wifiConnected = latest.wifi_connected === 1;
+        const rssi = latest.wifi_rssi || 0;
+        updateWiFiStatus(wifiConnected, rssi);
+        
+        // Prepare chart data with different label formats based on time range
+        const labels = data.map(d => {
+          const date = new Date(d.ts);
+          
+          if (currentTimeRange === 'realtime') {
+            // HH:MM:SS for realtime
+            return date.toLocaleTimeString('vi-VN', {
+              hour: '2-digit', 
+              minute: '2-digit', 
+              second: '2-digit'
+            });
+          } else if (currentTimeRange === 'hour') {
+            // HH:MM:SS for 1 hour
+            return date.toLocaleTimeString('vi-VN', {
+              hour: '2-digit', 
+              minute: '2-digit', 
+              second: '2-digit'
+            });
+          } else if (currentTimeRange === 'day') {
+            // HH:MM for 1 day (no seconds, too many points)
+            return date.toLocaleTimeString('vi-VN', {
+              hour: '2-digit', 
+              minute: '2-digit'
+            });
+          } else if (currentTimeRange === 'week') {
+            // DD/MM HH:MM for 1 week
+            return date.toLocaleDateString('vi-VN', {
+              day: '2-digit', 
+              month: '2-digit'
+            }) + ' ' + date.toLocaleTimeString('vi-VN', {
+              hour: '2-digit', 
+              minute: '2-digit'
+            });
+          }
+          
+          return date.toLocaleString('vi-VN');
+        });
+        const vals = data.map(d => d.soil);
+        
+        // Initialize chart if not done yet
+        if (!chartInitialized) {
+          initChart();
+        }
+        
+        // Update chart data smoothly
+        if (myChart) {
+          myChart.data.labels = labels;
+          myChart.data.datasets[0].data = vals;
+          myChart.update('none');
+        }
+        
+        // Log data count for debugging
+        console.log(`📊 Chart updated: ${data.length} data points (${currentTimeRange})`);
+      } catch (error) {
+        console.error('Error updating chart:', error);
+        updateWiFiStatus(false, 0);
+      }
+    }
+
+    // ============================================
+    // 5. TIME RANGE FILTER FOR CHART
+    // ============================================
+    function changeTimeRange(range) {
+      currentTimeRange = range;
+      
+      // Update button states
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-range="${range}"]`).classList.add('active');
+      
+      // Update chart immediately with new range
+      updateChart();
+      
+      // Adjust update interval based on range
+      startUpdates();
+      
+      console.log(`📊 Changed time range to: ${range}`);
+    }
+    
+    // ============================================
+    // SYSTEM INITIALIZATION
+    // ============================================
+    
+    // Initial load
+    updateChart();
+    
+    // Refresh intervals based on time range
+    let updateInterval = null;
+    
+    function startUpdates() {
+      if (updateInterval) clearInterval(updateInterval);
+      
+      let interval;
+      
+      switch(currentTimeRange) {
+        case 'realtime':
+          interval = 2000;  // Update every 2s for realtime
+          break;
+        case 'hour':
+          interval = 5000;  // Update every 5s for 1 hour view
+          break;
+        case 'day':
+          interval = 30000; // Update every 30s for 1 day view
+          break;
+        case 'week':
+          interval = 60000; // Update every 60s for 1 week view
+          break;
+        default:
+          interval = 5000;
+      }
+      
+      updateInterval = setInterval(updateChart, interval);
+      console.log(`⏱️ Chart update interval: ${interval/1000}s`);
+    }
+    
+    startUpdates();
+    
+    // Sync state every 3 seconds
+    setInterval(syncState, 3000);
+    
+    console.log('✅ Hệ thống tưới cây đã sẵn sàng!');
+  </script>
+</body>
+</html>
