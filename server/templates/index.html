@@ -1164,45 +1164,6 @@
         </div>
       </div>
 
-      <!-- 4. CẤU HÌNH WIFI ESP32 -->
-      <div class="card">
-        <div class="card-header">
-          <i class="fas fa-wifi"></i>
-          <h3>Cấu Hình WiFi ESP32</h3>
-        </div>
-
-        <div class="wifi-config-section" style="padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-              <i class="fas fa-info-circle" style="font-size: 2em;"></i>
-              <div>
-                <h4 style="margin: 0 0 8px 0; font-size: 1.1em;">Hướng Dẫn Cấu Hình WiFi</h4>
-                <p style="margin: 0; opacity: 0.95; line-height: 1.6;">
-                  Nhấn nút bên dưới để reset WiFi. ESP32 sẽ tạo điểm phát WiFi để bạn cấu hình lại.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <button onclick="resetWiFi()" class="wifi-reset-btn" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s;">
-            <i class="fas fa-sync-alt"></i>
-            Reset & Cấu Hình WiFi Mới
-          </button>
-
-          <div id="wifiInstructions" style="display: none; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #28a745;">
-            <h4 style="margin: 0 0 15px 0; color: #28a745;"><i class="fas fa-check-circle"></i> Lệnh đã gửi! Làm theo các bước sau:</h4>
-            <ol style="margin: 0; padding-left: 20px; line-height: 2;">
-              <li><strong>ESP32 sẽ khởi động lại</strong> sau vài giây</li>
-              <li><strong>Kết nối WiFi:</strong> <code style="background: white; padding: 3px 8px; border-radius: 4px;">ESP32_TuoiCay</code></li>
-              <li><strong>Mật khẩu:</strong> <code style="background: white; padding: 3px 8px; border-radius: 4px;">12345678</code></li>
-              <li><strong>Mở trình duyệt</strong> đến: <code style="background: white; padding: 3px 8px; border-radius: 4px;">192.168.4.1</code></li>
-              <li><strong>Chọn WiFi mới</strong> từ danh sách và nhập mật khẩu</li>
-              <li><strong>Chờ ESP32 kết nối</strong> - Trang này sẽ tự động cập nhật!</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-
       <!-- 5. LỊCH HẸN TƯỚI -->
       <div class="card">
         <div class="card-header">
@@ -1426,57 +1387,6 @@
         }
       } catch (error) {
         console.error('❌ Lỗi auto moisture:', error);
-      }
-    }
-    
-    // ============================================
-    // 3. WIFI CONFIGURATION
-    // ============================================
-    async function resetWiFi() {
-      if (!confirm('⚠️ ESP32 sẽ khởi động lại và vào chế độ cấu hình WiFi.\n\nBạn có chắc muốn tiếp tục?')) {
-        return;
-      }
-      
-      try {
-        const btn = document.querySelector('.wifi-reset-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi lệnh...';
-        
-        const response = await fetch('/api/reset_wifi', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'}
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ WiFi reset command sent:', data);
-          
-          // Show instructions
-          document.getElementById('wifiInstructions').style.display = 'block';
-          
-          // Update button
-          btn.innerHTML = '<i class="fas fa-check"></i> Lệnh đã gửi!';
-          btn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
-          
-          // Show alert
-          alert('✅ Lệnh reset WiFi đã gửi!\n\nESP32 sẽ khởi động lại.\nKết nối WiFi "ESP32_TuoiCay" (mật khẩu: 12345678)\nMở trình duyệt: 192.168.4.1');
-          
-          setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Reset & Cấu Hình WiFi Mới';
-            btn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
-          }, 10000);
-          
-        } else {
-          throw new Error('Server error');
-        }
-      } catch (error) {
-        console.error('❌ WiFi reset error:', error);
-        alert('❌ Lỗi khi gửi lệnh reset WiFi. Vui lòng thử lại!');
-        
-        const btn = document.querySelector('.wifi-reset-btn');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Reset & Cấu Hình WiFi Mới';
       }
     }
 

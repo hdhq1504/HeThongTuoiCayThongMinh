@@ -7,7 +7,7 @@
 const char* SSID = "Wokwi-GUEST";
 const char* PASSWORD = "";
 
-// === CẤU HÌNH SERVER ===
+// ⚠️ THAY IP MÁY TÍNH CỦA BẠN VÀO ĐÂY
 const char *SERVER_IP = "192.168.21.212"; 
 const int SERVER_PORT = 5000;
 
@@ -18,7 +18,7 @@ const int SERVER_PORT = 5000;
 const int ADC_KHO = 4095;
 const int ADC_UOT = 0;
 
-// Ngưỡng tự động (chạy song song backup cho server)
+// Ngưỡng tự động
 const float SOIL_LOW = 45.0;
 const float SOIL_HIGH = 60.0;
 
@@ -32,22 +32,19 @@ void setup() {
   pinMode(PUMP_PIN, OUTPUT);
   pinMode(DOAM_PIN, INPUT);
 
-  Serial.println("🚀 Wokwi ESP32 Starting...");
+  Serial.println("🚀 Wokwi Starting...");
   WiFi.begin(SSID, PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("\n✅ WiFi Connected!");
-  Serial.print("📡 IP: ");
-  Serial.println(WiFi.localIP());
 }
 
 void sendReport() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     String url = String("http://") + SERVER_IP + ":" + SERVER_PORT + "/api/report";
-    
     http.begin(url);
     http.addHeader("Content-Type", "application/json");
     
@@ -55,17 +52,11 @@ void sendReport() {
     doc["soil"] = soilPercent;
     doc["pump"] = pumpState ? 1 : 0;
     doc["auto"] = autoMode ? 1 : 0;
-    doc["wifi_rssi"] = WiFi.RSSI();
     
     String json;
     serializeJson(doc, json);
     
-    int httpCode = http.POST(json);
-    if (httpCode > 0) {
-      Serial.printf("📤 Report OK: %.1f%% | Pump: %d\n", soilPercent, pumpState);
-    } else {
-      Serial.printf("❌ Report Fail: %s\n", http.errorToString(httpCode).c_str());
-    }
+    http.POST(json);
     http.end();
   }
 }
@@ -74,31 +65,31 @@ void getConfig() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     String url = String("http://") + SERVER_IP + ":" + SERVER_PORT + "/api/config";
-    
     http.begin(url);
-    int httpCode = http.GET();
     
+    int httpCode = http.GET();
     if (httpCode == 200) {
       String payload = http.getString();
-      StaticJsonDocument<200> doc;
+      StaticJsonDocument<300> doc;
       deserializeJson(doc, payload);
       
-      int svPump = doc["pump_cmd"];
-      int svAuto = doc["auto"];
+      // Lấy giá trị từ Server
+      int svPump = doc["pump_cmd"]; // 0 hoặc 1
+      int svAuto = doc["auto"];     // 0 hoặc 1
       
-      // Đồng bộ trạng thái từ Server
+      // Cập nhật chế độ
       autoMode = (svAuto == 1);
       
-      // Nếu Server đang Manual (auto=0), ưu tiên lệnh bơm từ Server
+      // QUAN TRỌNG: Chỉ nghe lệnh Server khi KHÔNG ở chế độ Auto
       if (!autoMode) {
         if (svPump == 1 && !pumpState) {
           pumpState = true;
           digitalWrite(PUMP_PIN, HIGH);
-          Serial.println("🎮 Server: FORCE PUMP ON");
+          Serial.println("🎮 Server: BẬT BƠM");
         } else if (svPump == 0 && pumpState) {
           pumpState = false;
           digitalWrite(PUMP_PIN, LOW);
-          Serial.println("🎮 Server: FORCE PUMP OFF");
+          Serial.println("🎮 Server: TẮT BƠM");
         }
       }
     }
@@ -114,15 +105,21 @@ void loop() {
     soilPercent = map(raw, ADC_KHO, ADC_UOT, 0, 100);
     soilPercent = constrain(soilPercent, 0, 100);
 
-    // Logic Tự động tại ESP32 (Phản hồi nhanh)
+    // --- LOGIC TỰ ĐỘNG ---
     if (autoMode) {
+      // Nếu đất khô -> Bật
       if (soilPercent < SOIL_LOW && !pumpState) {
         pumpState = true;
         digitalWrite(PUMP_PIN, HIGH);
-      } else if (soilPercent > SOIL_HIGH && pumpState) {
+        Serial.printf("🤖 Auto: BẬT (Đất %.1f%%)\n", soilPercent);
+      } 
+      // Nếu đất ướt -> Tắt
+      else if (soilPercent > SOIL_HIGH && pumpState) {
         pumpState = false;
         digitalWrite(PUMP_PIN, LOW);
+        Serial.printf("🤖 Auto: TẮT (Đất %.1f%%)\n", soilPercent);
       }
+      // Ở giữa khoảng 45-60%: Giữ nguyên trạng thái cũ
     }
 
     sendReport();

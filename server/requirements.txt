@@ -1,0 +1,4 @@
+Flask==2.2.5
+flask-mqtt==1.1.1
+requests==2.31.0
+eventlet==0.33.3
