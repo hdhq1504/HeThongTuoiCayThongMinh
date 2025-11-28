@@ -13,9 +13,9 @@ def extend_db():
         cur.execute("ALTER TABLE logs ADD COLUMN weather_temp REAL")
         cur.execute("ALTER TABLE logs ADD COLUMN weather_humidity INTEGER")
         cur.execute("ALTER TABLE logs ADD COLUMN weather_rain REAL")
-        print("✅ Added ML columns to logs table")
+        print("Added ML columns to logs table")
     except sqlite3.OperationalError as e:
-        print(f"ℹ️ Columns may already exist: {e}")
+        print(f"Columns may already exist: {e}")
     
     # 2. Create ML predictions table
     cur.execute('''
@@ -28,7 +28,7 @@ def extend_db():
             model_version TEXT
         )
     ''')
-    print("✅ Created ml_predictions table")
+    print("Created ml_predictions table")
     
     # 3. Create anomalies table
     cur.execute('''
@@ -42,7 +42,7 @@ def extend_db():
             resolved INTEGER DEFAULT 0
         )
     ''')
-    print("✅ Created anomalies table")
+    print("Created anomalies table")
     
     # 4. Create weather cache table
     cur.execute('''
@@ -54,7 +54,7 @@ def extend_db():
             expires_at TEXT
         )
     ''')
-    print("✅ Created weather_cache table")
+    print("Created weather_cache table")
     
     con.commit()
     con.close()
